@@ -1,15 +1,15 @@
-名字: 颤动夜间建筑
+name: Flutter Nightly Build
 
-在:
-日程安排:
-    #计划每晚构建
-    - 时间单位: "0 0 * * *"
-工作流_调度:
+on:
+  schedule:
+    # schedule build every night
+    - cron: "0 0 * * *"
+  workflow_dispatch:
 
-工作:
-运行-颤动-夜间建造:
-使用: 。/.github/workflows/flutter-build . yml
-秘密: 继承
-随着:
-上传-工件: 错误的
-上传标签: “每晚”
+jobs:
+  run-flutter-nightly-build:
+    uses: ./.github/workflows/flutter-build.yml
+    secrets: inherit
+    with:
+      upload-artifact: false
+      upload-tag: "nightly"
