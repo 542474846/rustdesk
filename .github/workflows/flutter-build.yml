@@ -53,8 +53,9 @@ env:
   UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}-2"
   # Baked into the client at compile time by libs/hbb_common/src/config.rs; set as repo secrets.
-  RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER }}"
-  RS_PUB_KEY: "${{ secrets.RS_PUB_KEY }}"
+  # The || fallbacks keep the values non-empty when secrets are unset (empty would break the client).
+  RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER || 'rs-ny.rustdesk.com' }}"
+  RS_PUB_KEY: "${{ secrets.RS_PUB_KEY || 'OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=' }}"
   RELAY_SERVER: "${{ secrets.RELAY_SERVER }}"
   API_SERVER: "${{ secrets.API_SERVER }}"
 
