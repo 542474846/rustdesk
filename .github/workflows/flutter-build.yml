@@ -55,6 +55,8 @@ env:
   # Baked into the client at compile time by libs/hbb_common/src/config.rs; set as repo secrets.
   RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER }}"
   RS_PUB_KEY: "${{ secrets.RS_PUB_KEY }}"
+  RELAY_SERVER: "${{ secrets.RELAY_SERVER }}"
+  API_SERVER: "${{ secrets.API_SERVER }}"
 
 jobs:
   generate-sbom:

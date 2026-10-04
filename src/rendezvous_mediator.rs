@@ -1332,6 +1332,9 @@ impl RendezvousMediator {
     fn get_relay_server(&self, provided_by_rendezvous_server: String) -> String {
         let mut relay_server = Config::get_option("relay-server");
         if relay_server.is_empty() {
+            relay_server = config::RELAY_SERVER.to_owned();
+        }
+        if relay_server.is_empty() {
             relay_server = provided_by_rendezvous_server;
         }
         if relay_server.is_empty() {
