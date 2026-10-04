@@ -20,8 +20,14 @@ class UserModel {
   final RxString avatar = ''.obs;
   final RxBool isAdmin = false.obs;
   final RxString networkError = ''.obs;
+  // True while the API server is unreachable or rejects the session. The
+  // local login state and pulled data are kept, and a timer reconnects
+  // automatically until the server answers again.
+  final RxBool serverOffline = false.obs;
+  Timer? _offlineRetryTimer;
+  static const _offlineRetryInterval = Duration(seconds: 30);
   // True when networkError carries a server-reported error rather than a
-  // connectivity failure; netWorkErrorWidget hides the network tip then.
+  // connectivity failure; serverOfflineBanner shows a re-login tip then.
   final RxBool networkErrorFromServer = false.obs;
   bool get isLogin => userName.isNotEmpty;
   String get displayNameOrUserName =>
@@ -56,6 +62,8 @@ class UserModel {
     networkErrorFromServer.value = false;
     final token = bind.mainGetLocalOption(key: 'access_token');
     if (token == '') {
+      serverOffline.value = false;
+      _offlineRetryTimer?.cancel();
       await updateOtherModels();
       return;
     }
@@ -83,7 +91,12 @@ class UserModel {
       refreshingUser = false;
       final status = response.statusCode;
       if (status == 401 || status == 400) {
-        reset(resetOther: status == 401);
+        // The server answered but rejects the session. Keep the local login
+        // state and pulled data; the user logs out manually if needed.
+        networkErrorFromServer.value = true;
+        networkError.value = 'HTTP $status';
+        serverOffline.value = true;
+        _scheduleOfflineRetry();
         return;
       }
       final data = json.decode(decode_http_response(response));
@@ -100,6 +113,10 @@ class UserModel {
       _parseAndUpdateUser(user);
     } catch (e) {
       debugPrint('Failed to refreshCurrentUser: $e');
+      // Server unreachable or unusable response: keep the local login state
+      // and pulled data, show offline and reconnect automatically.
+      serverOffline.value = true;
+      _scheduleOfflineRetry();
       // Surface failures in the address book / group tabs, which offer a
       // retry. Anything not flagged above -- transport errors, non-JSON or
       // unexpected-schema bodies (e.g. a filter's block page) -- keeps the
@@ -109,7 +126,9 @@ class UserModel {
       }
     } finally {
       refreshingUser = false;
-      await updateOtherModels();
+      if (!serverOffline.value) {
+        await updateOtherModels();
+      }
     }
   }
 
@@ -136,6 +155,8 @@ class UserModel {
   }
 
   Future<void> reset({bool resetOther = false}) async {
+    serverOffline.value = false;
+    _offlineRetryTimer?.cancel();
     await bind.mainSetLocalOption(key: 'access_token', value: '');
     await bind.mainSetLocalOption(key: 'user_info', value: '');
     if (resetOther) {
@@ -147,11 +168,21 @@ class UserModel {
     avatar.value = '';
   }
 
+  void _scheduleOfflineRetry() {
+    _offlineRetryTimer?.cancel();
+    _offlineRetryTimer = Timer(_offlineRetryInterval, () {
+      refreshCurrentUser();
+    });
+  }
+
   _parseAndUpdateUser(UserPayload user) {
     userName.value = user.name;
     displayName.value = user.displayName;
     avatar.value = user.avatar;
     isAdmin.value = user.isAdmin;
+    // A fresh session from the server means we are back online.
+    serverOffline.value = false;
+    _offlineRetryTimer?.cancel();
     bind.mainSetLocalOption(key: 'user_info', value: jsonEncode(user));
     if (isWeb) {
       // ugly here, tmp solution

@@ -4027,22 +4027,42 @@ disableWindowMovable(int? windowId) {
   }
 }
 
-Widget netWorkErrorWidget() {
-  return Center(
-      child: Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      if (!gFFI.userModel.networkErrorFromServer.value)
-        Text(translate("network_error_tip")),
-      ElevatedButton(
-              onPressed: gFFI.userModel.refreshCurrentUser,
-              child: Text(translate("Retry")))
-          .marginSymmetric(vertical: 16),
-      SelectableText(gFFI.userModel.networkError.value,
-          style: TextStyle(fontSize: 11, color: Colors.red)),
-    ],
-  ));
+Widget serverOfflineBanner(BuildContext context) {
+  return Obx(() {
+    if (!gFFI.userModel.serverOffline.value) {
+      return SizedBox.shrink();
+    }
+    final msg = gFFI.userModel.networkErrorFromServer.value
+        ? translate('Login expired, please log in again')
+        : translate('Server offline, reconnecting automatically');
+    return Center(
+        child: Container(
+      color: MyTheme.color(context).errorBannerBg,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          FittedBox(
+            child: Icon(
+              Icons.info,
+              color: Color.fromARGB(255, 249, 81, 81),
+            ),
+          ).marginAll(4),
+          Flexible(
+            child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(msg)).marginSymmetric(vertical: 2),
+          ),
+          InkWell(
+              onTap: gFFI.userModel.refreshCurrentUser,
+              child: Text(
+                translate("Retry"),
+                style: TextStyle(color: MyTheme.accent),
+              )).marginSymmetric(horizontal: 5),
+        ],
+      ).marginSymmetric(vertical: 4),
+    ));
+  });
 }
 
 List<ResizeEdge>? get windowManagerEnableResizeEdges => isWindows

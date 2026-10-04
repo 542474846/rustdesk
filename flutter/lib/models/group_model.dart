@@ -21,7 +21,6 @@ class GroupModel {
   WeakReference<FFI> parent;
   var initialized = false;
   var _cacheLoadOnceFlag = false;
-  var _statusCode = 200;
 
   final Map<String, VoidCallback> _peerIdUpdateListeners = {};
 
@@ -54,11 +53,7 @@ class GroupModel {
     groupLoading.value = false;
     initialized = true;
     platformFFI.tryHandle({'name': LoadEvent.group});
-    if (_statusCode == 401) {
-      gFFI.userModel.reset(resetOther: true);
-    } else {
-      _saveCache();
-    }
+    _saveCache();
   }
 
   Future<void> _pull() async {
@@ -120,7 +115,6 @@ class GroupModel {
               'pageSize': pageSize.toString(),
             });
         final resp = await http.get(uri, headers: getHttpHeaders());
-        _statusCode = resp.statusCode;
         Map<String, dynamic> json =
             _jsonDecodeResp(decode_http_response(resp), resp.statusCode);
         if (json.containsKey('error')) {
@@ -178,7 +172,6 @@ class GroupModel {
               'status': '1',
             });
         final resp = await http.get(uri, headers: getHttpHeaders());
-        _statusCode = resp.statusCode;
         Map<String, dynamic> json =
             _jsonDecodeResp(decode_http_response(resp), resp.statusCode);
         if (json.containsKey('error')) {
@@ -243,7 +236,6 @@ class GroupModel {
             port: uri0.port,
             queryParameters: queryParameters);
         final resp = await http.get(uri, headers: getHttpHeaders());
-        _statusCode = resp.statusCode;
 
         Map<String, dynamic> json =
             _jsonDecodeResp(decode_http_response(resp), resp.statusCode);

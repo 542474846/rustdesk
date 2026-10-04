@@ -217,13 +217,10 @@ class AbModel {
     }
   }
 
-  void _setListPullError(Object err, {required bool quiet, int? statusCode}) {
+  void _setListPullError(Object err, {required bool quiet}) {
     if (!quiet) {
       _listPullError.value =
           '${translate('pull_ab_failed_tip')}: ${translate(err.toString())}';
-    }
-    if (statusCode == 401) {
-      gFFI.userModel.reset(resetOther: true);
     }
   }
 
@@ -252,7 +249,7 @@ class AbModel {
       return true;
     } catch (err) {
       debugPrint('get ab settings err: ${err.toString()}');
-      _setListPullError(err, quiet: quiet, statusCode: statusCode);
+      _setListPullError(err, quiet: quiet);
     }
     return false;
   }
@@ -286,7 +283,7 @@ class AbModel {
       return true;
     } catch (err) {
       debugPrint('get personal ab err: ${err.toString()}');
-      _setListPullError(err, quiet: quiet, statusCode: statusCode);
+      _setListPullError(err, quiet: quiet);
     }
     // Real error: stop the current pull.
     return false;
@@ -351,7 +348,7 @@ class AbModel {
       return true;
     } catch (err) {
       debugPrint('_getSharedAbProfiles err: ${err.toString()}');
-      _setListPullError(err, quiet: quiet, statusCode: statusCode);
+      _setListPullError(err, quiet: quiet);
     }
     return false;
   }
@@ -1008,13 +1005,11 @@ class LegacyAb extends BaseAb {
   Future<bool> pullAbImpl({quiet = false}) async {
     bool ret = false;
     final api = "${await bind.mainGetApiServer()}/api/ab";
-    int? statusCode;
     try {
       var authHeaders = getHttpHeaders();
       authHeaders['Content-Type'] = "application/json";
       authHeaders['Accept-Encoding'] = "gzip";
       final resp = await http.get(Uri.parse(api), headers: authHeaders);
-      statusCode = resp.statusCode;
       if (resp.body.toLowerCase() == "null") {
         // normal reply, empty ab return null
         tags.clear();
@@ -1041,12 +1036,6 @@ class LegacyAb extends BaseAb {
       if (!quiet) {
         pullError.value =
             '${translate('pull_ab_failed_tip')}: ${translate(err.toString())}';
-      }
-    } finally {
-      if (pullError.isNotEmpty) {
-        if (statusCode == 401) {
-          gFFI.userModel.reset(resetOther: true);
-        }
       }
     }
     return ret;
@@ -1431,7 +1420,6 @@ class Ab extends BaseAb {
 
   Future<bool> _fetchPeers(List<Peer> tmpPeers, {quiet = false}) async {
     final api = "${await bind.mainGetApiServer()}/api/ab/peers";
-    int? statusCode;
     try {
       var uri0 = Uri.parse(api);
       final pageSize = 100;
@@ -1453,7 +1441,6 @@ class Ab extends BaseAb {
         headers['Content-Type'] = "application/json";
         _setEmptyBody(headers);
         final resp = await http.post(uri, headers: headers);
-        statusCode = resp.statusCode;
         Map<String, dynamic> json =
             _jsonDecodeRespMap(decode_http_response(resp), resp.statusCode);
         if (json.containsKey('error')) {
@@ -1486,19 +1473,12 @@ class Ab extends BaseAb {
         pullError.value =
             '${translate('pull_ab_failed_tip')}: ${translate(err.toString())}';
       }
-    } finally {
-      if (pullError.isNotEmpty) {
-        if (statusCode == 401) {
-          gFFI.userModel.reset(resetOther: true);
-        }
-      }
     }
     return false;
   }
 
   Future<bool> _fetchTags(List<AbTag> tmpTags, {quiet = false}) async {
     final api = "${await bind.mainGetApiServer()}/api/ab/tags/${profile.guid}";
-    int? statusCode;
     try {
       var uri0 = Uri.parse(api);
       var uri = Uri(
@@ -1511,7 +1491,6 @@ class Ab extends BaseAb {
       headers['Content-Type'] = "application/json";
       _setEmptyBody(headers);
       final resp = await http.post(uri, headers: headers);
-      statusCode = resp.statusCode;
       List<dynamic> json =
           _jsonDecodeRespList(decode_http_response(resp), resp.statusCode);
       if (resp.statusCode != 200) {
@@ -1532,12 +1511,6 @@ class Ab extends BaseAb {
       if (!quiet) {
         pullError.value =
             '${translate('pull_ab_failed_tip')}: ${translate(err.toString())}';
-      }
-    } finally {
-      if (pullError.isNotEmpty) {
-        if (statusCode == 401) {
-          gFFI.userModel.reset(resetOther: true);
-        }
       }
     }
     return false;
