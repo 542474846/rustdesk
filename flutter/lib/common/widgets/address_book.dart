@@ -51,11 +51,12 @@ class _AddressBookState extends State<AddressBook> {
               if (gFFI.abModel.currentAbLoading.value &&
                   gFFI.abModel.currentAbEmpty)
                 const LinearProgressIndicator(),
-              buildErrorBanner(context,
-                  loading: gFFI.abModel.currentAbLoading,
-                  err: gFFI.abModel.abPullError,
-                  retry: null,
-                  close: gFFI.abModel.clearPullErrors),
+              if (!gFFI.userModel.serverOffline.value)
+                buildErrorBanner(context,
+                    loading: gFFI.abModel.currentAbLoading,
+                    err: gFFI.abModel.abPullError,
+                    retry: null,
+                    close: gFFI.abModel.clearPullErrors),
               buildErrorBanner(context,
                   loading: gFFI.abModel.currentAbLoading,
                   err: gFFI.abModel.currentAbPushError,

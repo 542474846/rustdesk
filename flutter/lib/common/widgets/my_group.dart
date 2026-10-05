@@ -42,11 +42,12 @@ class _MyGroupState extends State<MyGroup> {
       return Column(
         children: [
           serverOfflineBanner(context),
-          buildErrorBanner(context,
-              loading: gFFI.groupModel.groupLoading,
-              err: gFFI.groupModel.groupLoadError,
-              retry: null,
-              close: () => gFFI.groupModel.groupLoadError.value = ''),
+          if (!gFFI.userModel.serverOffline.value)
+            buildErrorBanner(context,
+                loading: gFFI.groupModel.groupLoading,
+                err: gFFI.groupModel.groupLoadError,
+                retry: null,
+                close: () => gFFI.groupModel.groupLoadError.value = ''),
           Expanded(
               child: Obx(() => stateGlobal.isPortrait.isTrue
                   ? _buildPortrait()

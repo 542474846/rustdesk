@@ -122,6 +122,7 @@ class AbModel {
     if (bind.isDisableAb()) return;
     if (!gFFI.userModel.isLogin) return;
     if (gFFI.userModel.networkError.isNotEmpty) return;
+    if (gFFI.userModel.serverOffline.value) return;
     if (_pulling) return;
     if (force == null && _pulledOnce) {
       return;
@@ -889,6 +890,7 @@ abstract class BaseAb {
 
   Future<void> pullAb({quiet = false}) async {
     if (abPulling) return;
+    if (gFFI.userModel.serverOffline.value) return;
     abPulling = true;
     if (!quiet) {
       abLoading.value = true;
@@ -1403,18 +1405,20 @@ class Ab extends BaseAb {
     List<Peer> tmpPeers = [];
     if (!await _fetchPeers(tmpPeers, quiet: quiet)) {
       ret = false;
+    } else {
+      peers.value = tmpPeers;
     }
-    peers.value = tmpPeers;
     List<AbTag> tmpTags = [];
     if (!await _fetchTags(tmpTags, quiet: quiet)) {
       ret = false;
+    } else {
+      tags.value = tmpTags.map((e) => e.name).toList();
+      Map<String, int> tmpTagColors = {};
+      for (var t in tmpTags) {
+        tmpTagColors[t.name] = t.color;
+      }
+      tagColors.value = tmpTagColors;
     }
-    tags.value = tmpTags.map((e) => e.name).toList();
-    Map<String, int> tmpTagColors = {};
-    for (var t in tmpTags) {
-      tmpTagColors[t.name] = t.color;
-    }
-    tagColors.value = tmpTagColors;
     return ret;
   }
 
